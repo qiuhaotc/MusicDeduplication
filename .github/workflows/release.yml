@@ -24,7 +24,7 @@ jobs:
         run: dotnet restore
 
       - name: Run tests
-        run: dotnet test --no-restore --configuration Release
+        run: dotnet test --no-restore --configuration Debug
 
       - name: Publish (self-contained, win-x64)
         run: |
