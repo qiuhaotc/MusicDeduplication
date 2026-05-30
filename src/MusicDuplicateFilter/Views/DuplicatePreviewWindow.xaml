@@ -75,12 +75,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:DuplicateFileItem}">
                                 <Border Background="#FFF3F3" CornerRadius="4"
-                                        Padding="10" Margin="0,0,0,8"
-                                        Cursor="Hand">
-                                    <Border.InputBindings>
-                                        <MouseBinding Gesture="LeftClick"
-                                                      Command="{Binding DataContext.PlaySelectedDuplicateCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    </Border.InputBindings>
+                                        Padding="10" Margin="0,0,0,8">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Border Background="#FFCDD2" CornerRadius="10"
@@ -103,6 +98,19 @@
                                                    Text="{Binding FileInfo.FilePath}"
                                                    TextTrimming="CharacterEllipsis"
                                                    MaxWidth="300" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <Button Content="▶ 播放" Height="26"
+                                                    Padding="8,3" FontSize="11" Margin="0,0,6,0"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Command="{Binding DataContext.PlaySelectedDuplicateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="📂 打开位置" Height="26"
+                                                    Padding="8,3" FontSize="11"
+                                                    Background="Transparent" BorderThickness="1"
+                                                    BorderBrush="#DDD" Cursor="Hand"
+                                                    Command="{Binding DataContext.OpenDuplicateInExplorerCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>

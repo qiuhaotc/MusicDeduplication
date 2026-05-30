@@ -133,6 +133,16 @@ public partial class MainViewModel : ViewModelBase
             ScanDirectories.Remove(dir);
     }
 
+    /// <summary>清空目录列表并保存设置</summary>
+    [RelayCommand]
+    private void ClearDirectories()
+    {
+        ScanDirectories.Clear();
+        var settings = Models.AppSettings.Load();
+        settings.ScanDirectories = [];
+        settings.Save();
+    }
+
     private void AddDirectoryToList(string dir)
     {
         if (!ScanDirectories.Contains(dir, StringComparer.OrdinalIgnoreCase))
@@ -280,13 +290,10 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var result = System.Windows.MessageBox.Show(
-            _loc.GetString("Delete.ConfirmMessage", selectedFiles.Count),
-            _loc.GetString("Delete.ConfirmTitle"),
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-
-        if (result != System.Windows.MessageBoxResult.Yes) return;
+        var confirmed = Views.DeleteConfirmWindow.ShowConfirm(
+            selectedFiles,
+            System.Windows.Application.Current.MainWindow);
+        if (!confirmed) return;
 
         try
         {

@@ -153,9 +153,7 @@ public class DuplicateDetector : IDuplicateDetector
             totalScore += weight * sim;
         }
 
-        var nameA = StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(a.FileName));
-        var nameB = StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(b.FileName));
-        Add(rule.FileNameWeight, StringSimilarity.NormalizedSimilarity(nameA, nameB));
+        Add(rule.FileNameWeight, StringSimilarity.NormalizedSimilarity(a.CleanedFileName, b.CleanedFileName));
 
         if (!string.IsNullOrWhiteSpace(a.Title) && !string.IsNullOrWhiteSpace(b.Title))
             Add(rule.TitleWeight, StringSimilarity.NormalizedSimilarity(a.Title, b.Title));
@@ -212,8 +210,7 @@ public class DuplicateDetector : IDuplicateDetector
 
     private static IEnumerable<string> BucketKeysFor(MusicFileInfo f)
     {
-        var normName = StringSimilarity.CleanFileName(
-            Path.GetFileNameWithoutExtension(f.FileName)).ToLowerInvariant().Trim();
+        var normName = f.CleanedFileName.ToLowerInvariant().Trim();
 
         if (normName.Length > 0)
             yield return "n:" + normName[..Math.Min(3, normName.Length)];
@@ -239,7 +236,7 @@ public class DuplicateDetector : IDuplicateDetector
 
         var title = !string.IsNullOrWhiteSpace(keepFile.Title)
             ? keepFile.Title
-            : StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(keepFile.FileName));
+            : keepFile.CleanedFileName;
 
         return !string.IsNullOrWhiteSpace(keepFile.Artist)
             ? $"{keepFile.Artist} - {title}"

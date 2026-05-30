@@ -44,10 +44,11 @@ public partial class DuplicatePreviewViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void PlaySelectedDuplicate()
+    private void PlaySelectedDuplicate(Models.DuplicateFileItem? item)
     {
-        if (SelectedDuplicate?.FileInfo?.FilePath != null)
-            _fileOperationService.PreviewFile(SelectedDuplicate.FileInfo.FilePath);
+        var path = item?.FileInfo?.FilePath ?? SelectedDuplicate?.FileInfo?.FilePath;
+        if (path != null)
+            _fileOperationService.PreviewFile(path);
     }
 
     [RelayCommand]
@@ -58,10 +59,11 @@ public partial class DuplicatePreviewViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenDuplicateInExplorer()
+    private void OpenDuplicateInExplorer(Models.DuplicateFileItem? item)
     {
-        if (SelectedDuplicate?.FileInfo?.FilePath != null)
-            _fileOperationService.RevealInExplorer(SelectedDuplicate.FileInfo.FilePath);
+        var path = item?.FileInfo?.FilePath ?? SelectedDuplicate?.FileInfo?.FilePath;
+        if (path != null)
+            _fileOperationService.RevealInExplorer(path);
     }
 
     [RelayCommand]

@@ -43,10 +43,22 @@
                         </Grid.RowDefinitions>
 
                         <!-- 标题 -->
-                        <TextBlock Grid.Row="0"
-                                   Text="{Binding L[Main.DirectoryListHeader]}"
-                                   FontSize="13" FontWeight="SemiBold"
-                                   Margin="0,0,0,6" />
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding L[Main.DirectoryListHeader]}"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="清空"
+                                    FontSize="11" Padding="6,2" Height="22"
+                                    Background="Transparent" BorderThickness="1"
+                                    BorderBrush="#DDD" Cursor="Hand" Foreground="#888"
+                                    Command="{Binding ClearDirectoriesCommand}"
+                                    IsEnabled="{Binding IsNotScanning}" />
+                        </Grid>
 
                         <!-- 目录列表 -->
                         <Border Grid.Row="1"
@@ -69,12 +81,12 @@
                                                            TextTrimming="CharacterEllipsis"
                                                            ToolTip="{Binding}" />
                                                 <Button Grid.Column="1"
-                                                        Content="✕"
-                                                        FontSize="10" Padding="3,1"
+                                                        Content="🗑"
+                                                        FontSize="13" Padding="3,1"
                                                         Background="Transparent"
                                                         BorderThickness="0"
                                                         Cursor="Hand"
-                                                        Foreground="#AAA"
+                                                        Foreground="#CC5555"
                                                         VerticalAlignment="Center"
                                                         Command="{Binding DataContext.RemoveDirectoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
@@ -113,7 +125,7 @@
                             </TextBox>
                             <Button Content="{Binding L[Main.AddDirectory]}"
                                     Command="{Binding AddDirectoryCommand}"
-                                    Style="{StaticResource PrimaryButton}"
+                                    Style="{StaticResource SecondaryButton}"
                                     Height="36" Margin="0,4,0,0"
                                     IsEnabled="{Binding IsNotScanning}" />
                         </StackPanel>

@@ -93,8 +93,8 @@ public static class StringSimilarity
     {
         if (string.IsNullOrEmpty(fileName)) return string.Empty;
 
-        // 去除扩展名
-        var name = Path.GetFileNameWithoutExtension(fileName);
+        // 调用方传入的已是不含扩展名的文件名，无需再去除扩展名
+        var name = fileName;
 
         // 去除常见的方括号/圆括号内无关的标签（保留可能包含歌曲信息的内容）
         // 这些是下载站或转码时添加的噪音标签

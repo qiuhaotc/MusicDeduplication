@@ -11,6 +11,12 @@ public class MusicFileInfo
     /// <summary>文件名（不含路径）</summary>
     public string FileName { get; set; } = string.Empty;
 
+    /// <summary>文件名（不含路径和扩展名）</summary>
+    public string FileNameWithoutExtension { get; set;  } = string.Empty;
+
+    /// <summary>清理后的文件名（去除噪音标签，用于相似度比较）</summary>
+    public string CleanedFileName { get; set; } = string.Empty;
+
     /// <summary>歌曲标题（来自元数据）</summary>
     public string Title { get; set; } = string.Empty;
 

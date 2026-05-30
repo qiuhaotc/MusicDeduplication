@@ -45,10 +45,11 @@ public class StringSimilarityTests
     }
 
     [Theory]
-    [InlineData("Song Name (Official Video).mp3", "Song Name")]
-    [InlineData("Artist - Track [320 kbps].flac", "Artist - Track")]
-    [InlineData("Beat - [HQ] Version.wav", "Beat - Version")]
-    [InlineData("Simple Song.ogg", "Simple Song")]
+    [InlineData("Song Name (Official Video)", "Song Name")]
+    [InlineData("Artist - Track [320 kbps]", "Artist - Track")]
+    [InlineData("Beat - [HQ] Version", "Beat - Version")]
+    [InlineData("Simple Song", "Simple Song")]
+    [InlineData("K. Williams - 菊次郎的夏天", "K. Williams - 菊次郎的夏天")]
     public void CleanFileName_ShouldRemoveNoise(string fileName, string expected)
     {
         var result = StringSimilarity.CleanFileName(fileName);

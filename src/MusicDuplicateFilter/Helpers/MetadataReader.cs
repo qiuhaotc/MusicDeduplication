@@ -20,17 +20,19 @@ public static class MetadataReader
     public static MusicFileInfo ReadMetadata(string filePath, HashSet<string>? allowedExtensions = null)
     {
         var fileInfo = new FileInfo(filePath);
+        var nameWithoutExt = Path.GetFileNameWithoutExtension(fileInfo.Name);
         var musicInfo = new MusicFileInfo
         {
             FilePath = filePath,
             FileName = fileInfo.Name,
+            FileNameWithoutExtension = nameWithoutExt,
+            CleanedFileName = StringSimilarity.CleanFileName(nameWithoutExt),
             FileSize = fileInfo.Length,
             Format = fileInfo.Extension.ToLowerInvariant().TrimStart('.'),
         };
 
         // 尝试从文件名推断标题（元数据不可用时的后备方案）
-        var nameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-        musicInfo.Title = StringSimilarity.CleanFileName(nameWithoutExt);
+        musicInfo.Title = musicInfo.CleanedFileName;
 
         // 如果格式不支持 TagLib 读取，跳过
         if (allowedExtensions != null && !allowedExtensions.Contains(fileInfo.Extension))
