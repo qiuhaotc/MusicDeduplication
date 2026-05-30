@@ -77,6 +77,16 @@ public static class StringSimilarity
     }
 
     /// <summary>
+    /// 标准化后计算相似度（0-100），忽略大小写和特殊字符
+    /// </summary>
+    public static double NormalizedSimilarity(string a, string b)
+    {
+        if (string.IsNullOrWhiteSpace(a) && string.IsNullOrWhiteSpace(b)) return 100;
+        if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return 0;
+        return CalculateSimilarity(Normalize(a), Normalize(b));
+    }
+
+    /// <summary>
     /// 提取文件名中可能包含的歌曲信息（去除常见的序号、网站名等噪音）
     /// </summary>
     public static string CleanFileName(string fileName)

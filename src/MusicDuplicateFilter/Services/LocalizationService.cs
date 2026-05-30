@@ -1,13 +1,12 @@
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Globalization;
-using System.IO;
-using System.Reflection;
-using System.Xml.Linq;
+using System.Text.Json;
 
 namespace MusicDuplicateFilter.Services;
 
 /// <summary>
-/// 基于 .resx 嵌入资源文件的本地化服务
+/// 基于嵌入 JSON 文件的本地化服务
 /// </summary>
 public class LocalizationService : ILocalizationService
 {
@@ -20,62 +19,42 @@ public class LocalizationService : ILocalizationService
 
     public LocalizationService()
     {
-        // 预加载所有语言的资源
-        LoadResources("zh-CN", "MusicDuplicateFilter.Resources.Strings.resx");
-        LoadResources("en-US", "MusicDuplicateFilter.Resources.Strings.en-US.resx");
+        LoadResources("zh-CN", "pack://application:,,,/Resources/Strings.zh-CN.json");
+        LoadResources("en-US", "pack://application:,,,/Resources/Strings.en-US.json");
     }
 
-    /// <summary>
-    /// 获取本地化字符串
-    /// </summary>
+    /// <summary>获取本地化字符串</summary>
     public string GetString(string key)
     {
         if (_stringResources.TryGetValue(_currentLanguage, out var resources) &&
             resources.TryGetValue(key, out var value))
-        {
             return value;
-        }
 
         // 回退到中文
         if (_currentLanguage != "zh-CN" &&
             _stringResources.TryGetValue("zh-CN", out var fallback) &&
             fallback.TryGetValue(key, out var fallbackValue))
-        {
             return fallbackValue;
-        }
 
-        return $"[{key}]";
+        return key; // 返回 key 本身作为兜底（不加方括号，避免显示丑陋）
     }
 
-    /// <summary>
-    /// 带格式参数的本地化字符串
-    /// </summary>
+    /// <summary>带格式参数的本地化字符串</summary>
     public string GetString(string key, params object[] args)
     {
         var format = GetString(key);
-        try
-        {
-            return string.Format(format, args);
-        }
-        catch
-        {
-            return format;
-        }
+        try { return string.Format(format, args); }
+        catch { return format; }
     }
 
-    /// <summary>
-    /// 切换语言
-    /// </summary>
+    /// <summary>切换语言</summary>
     public void SetLanguage(string language)
     {
         if (_currentLanguage == language) return;
-
-        if (!SupportedLanguages.Contains(language))
-            language = "zh-CN";
+        if (!SupportedLanguages.Contains(language)) language = "zh-CN";
 
         _currentLanguage = language;
 
-        // 设置当前线程的 UI 文化
         var culture = new CultureInfo(language);
         Thread.CurrentThread.CurrentUICulture = culture;
         CultureInfo.CurrentUICulture = culture;
@@ -83,55 +62,54 @@ public class LocalizationService : ILocalizationService
         LanguageChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// 从嵌入的 .resx 文件中加载资源字典
-    /// </summary>
-    private void LoadResources(string language, string resourceName)
+    /// <summary>从 WPF Pack 资源中加载 JSON 本地化文件</summary>
+    private void LoadResources(string language, string packUri)
     {
-        var assembly = Assembly.GetExecutingAssembly();
-
         try
         {
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
-            {
-                // 尝试通过部分名称匹配查找资源
-                var allResources = assembly.GetManifestResourceNames();
-                var matchedName = allResources.FirstOrDefault(r =>
-                    r.EndsWith(resourceName, StringComparison.OrdinalIgnoreCase) ||
-                    r.EndsWith($"Resources.Strings.resx", StringComparison.OrdinalIgnoreCase) && language == "zh-CN" ||
-                    r.EndsWith($"Resources.Strings.en-US.resx", StringComparison.OrdinalIgnoreCase) && language == "en-US");
+            var uri = new Uri(packUri, UriKind.Absolute);
+            var info = System.Windows.Application.GetResourceStream(uri);
+            if (info == null) return;
 
-                if (matchedName == null) return;
-                using var matchedStream = assembly.GetManifestResourceStream(matchedName);
-                if (matchedStream == null) return;
-                ParseResxStream(language, matchedStream);
-            }
-            else
-            {
-                ParseResxStream(language, stream);
-            }
+            using var stream = info.Stream;
+            var json = new StreamReader(stream).ReadToEnd();
+            var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            if (dict != null) _stringResources[language] = dict;
         }
-        catch (Exception)
+        catch
         {
-            // 加载失败，静默处理
+            // 加载失败静默处理
         }
-    }
-
-    private void ParseResxStream(string language, Stream stream)
-    {
-        var doc = XDocument.Load(stream);
-        var resources = new Dictionary<string, string>();
-
-        foreach (var dataElement in doc.Root?.Elements("data") ?? [])
-        {
-            var name = dataElement.Attribute("name")?.Value;
-            var value = dataElement.Element("value")?.Value ?? string.Empty;
-
-            if (!string.IsNullOrEmpty(name))
-                resources[name] = value;
-        }
-
-        _stringResources[language] = resources;
     }
 }
+
+/// <summary>
+/// 可在 XAML 中通过 {Binding L[Key]} 使用的本地化代理（INotifyPropertyChanged 驱动刷新）
+/// </summary>
+public sealed class LocalizationProvider : INotifyPropertyChanged
+{
+    public static LocalizationProvider Current { get; } = new();
+
+    private ILocalizationService? _svc;
+
+    private LocalizationProvider() { }
+
+    /// <summary>绑定到本地化服务（App启动时调用）</summary>
+    public static void Attach(ILocalizationService svc)
+    {
+        Current._svc = svc;
+        svc.LanguageChanged += (_, _) =>
+            Current.PropertyChanged?.Invoke(Current, new PropertyChangedEventArgs("Item[]"));
+    }
+
+    /// <summary>XAML 绑定索引器：{Binding L[Main.Browse]}</summary>
+    public string this[string key]
+    {
+        get => _svc?.GetString(key) ?? key;
+        // WPF 部分目标属性默认 TwoWay，必须有 setter 否则抛 InvalidOperationException
+        set { }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
+

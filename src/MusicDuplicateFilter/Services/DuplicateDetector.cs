@@ -4,7 +4,7 @@ using MusicDuplicateFilter.Models;
 namespace MusicDuplicateFilter.Services;
 
 /// <summary>
-/// 重复检测服务实现
+/// 重复检测服务实现（Bucket + UnionFind + 加权相似度评分）
 /// </summary>
 public class DuplicateDetector : IDuplicateDetector
 {
@@ -14,166 +14,236 @@ public class DuplicateDetector : IDuplicateDetector
         IProgress<int>? progressCallback = null,
         CancellationToken cancellationToken = default)
     {
-        return Task.Run(() =>
+        return Task.Run(() => Detect(files, settings, progressCallback, cancellationToken), cancellationToken);
+    }
+
+    private static List<DuplicateGroup> Detect(
+        List<MusicFileInfo> files,
+        AppSettings settings,
+        IProgress<int>? progress,
+        CancellationToken ct)
+    {
+        if (files.Count < 2)
         {
-            var groups = new List<DuplicateGroup>();
-            var processed = new HashSet<int>(); // 已分配到某个组的文件索引
-            var totalPairs = (long)files.Count * (files.Count - 1) / 2;
-            var checkedCount = 0L;
-            var lastReportedPercent = -1;
+            progress?.Report(100);
+            return [];
+        }
 
-            for (var i = 0; i < files.Count; i++)
+        var rule = settings.MatchRule;
+
+        // ── Step 1: 按粗粒度 Key 分桶，减少 O(n²) 的比较次数 ──
+        var buckets = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < files.Count; i++)
+        {
+            foreach (var key in BucketKeysFor(files[i]))
             {
-                if (cancellationToken.IsCancellationRequested) break;
-                if (processed.Contains(i)) continue;
+                if (!buckets.TryGetValue(key, out var list))
+                    buckets[key] = list = [];
+                list.Add(i);
+            }
+        }
 
-                var similarFiles = new List<(int index, double score, string type)>();
+        // ── Step 2: 对桶内文件两两评分，超过阈值则 Union ──
+        var uf = new UnionFind(files.Count);
+        var pairScores = new Dictionary<(int, int), double>();
+        var processedBuckets = 0;
+        var totalBuckets = buckets.Count;
 
-                for (var j = i + 1; j < files.Count; j++)
+        foreach (var bucket in buckets.Values)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var ids = bucket.Distinct().ToArray();
+            for (var i = 0; i < ids.Length; i++)
+            {
+                for (var j = i + 1; j < ids.Length; j++)
                 {
-                    if (cancellationToken.IsCancellationRequested) break;
+                    var a = ids[i]; var b = ids[j];
+                    var key = a < b ? (a, b) : (b, a);
+                    if (pairScores.ContainsKey(key)) continue;
 
-                    checkedCount++;
-                    if (totalPairs > 0)
-                    {
-                        var percent = (int)((double)checkedCount / totalPairs * 100);
-                        if (percent != lastReportedPercent)
-                        {
-                            lastReportedPercent = percent;
-                            progressCallback?.Report(percent);
-                        }
-                    }
+                    var score = CalculateScore(files[a], files[b], rule);
+                    pairScores[key] = score;
 
-                    var score = CalculateDuplicateScore(files[i], files[j], settings, out var similarityType);
-                    if (score >= Math.Min(settings.FileNameSimilarityThreshold, settings.MetadataSimilarityThreshold))
-                    {
-                        similarFiles.Add((j, score, similarityType));
-                    }
-                }
-
-                if (similarFiles.Count > 0)
-                {
-                    var group = new DuplicateGroup
-                    {
-                        SimilarityType = similarFiles.First().type
-                    };
-                    var maxScore = 0.0;
-
-                    // 添加当前文件
-                    var keepItem = new DuplicateFileItem
-                    {
-                        FileInfo = files[i],
-                        IsKeepSuggested = true,
-                        IsSelectedForDeletion = false
-                    };
-                    group.Files.Add(keepItem);
-                    processed.Add(i);
-
-                    // 添加所有相似文件
-                    foreach (var (index, score, _) in similarFiles)
-                    {
-                        var item = new DuplicateFileItem
-                        {
-                            FileInfo = files[index],
-                            SimilarityScore = score,
-                            IsSelectedForDeletion = true // 默认标记非保留文件为待删除
-                        };
-                        group.Files.Add(item);
-                        processed.Add(index);
-                        if (score > maxScore) maxScore = score;
-                    }
-
-                    group.MaxScore = maxScore;
-                    group.GroupTitle = GenerateGroupTitle(group);
-                    groups.Add(group);
+                    if (score >= rule.Threshold)
+                        uf.Union(a, b);
                 }
             }
 
-            progressCallback?.Report(100);
-            return groups;
-        }, cancellationToken);
+            processedBuckets++;
+            progress?.Report(processedBuckets * 95 / Math.Max(1, totalBuckets));
+        }
+
+        // ── Step 3: 按 UnionFind 根节点分组 ──
+        var groupMap = new Dictionary<int, List<int>>();
+        for (var i = 0; i < files.Count; i++)
+        {
+            var root = uf.Find(i);
+            if (!groupMap.TryGetValue(root, out var list))
+                groupMap[root] = list = [];
+            list.Add(i);
+        }
+
+        // ── Step 4: 构建 DuplicateGroup 列表 ──
+        var result = new List<DuplicateGroup>();
+
+        foreach (var (_, members) in groupMap)
+        {
+            if (members.Count < 2) continue;
+            ct.ThrowIfCancellationRequested();
+
+            var keepIdx = DetermineKeepFile(files, members, settings.KeepPreference);
+            var minGroupScore = 100.0;
+            var group = new DuplicateGroup();
+
+            foreach (var idx in members)
+            {
+                double score;
+                if (idx == keepIdx)
+                {
+                    score = 100.0;
+                }
+                else
+                {
+                    var pKey = idx < keepIdx ? (idx, keepIdx) : (keepIdx, idx);
+                    if (!pairScores.TryGetValue(pKey, out score))
+                        score = CalculateScore(files[idx], files[keepIdx], rule);
+                    if (score < minGroupScore) minGroupScore = score;
+                }
+
+                group.Files.Add(new DuplicateFileItem
+                {
+                    FileInfo = files[idx],
+                    SimilarityScore = score,
+                    IsKeepSuggested = idx == keepIdx,
+                    IsSelectedForDeletion = idx != keepIdx
+                });
+            }
+
+            // 保留文件排最前
+            var keepItem = group.Files.FirstOrDefault(f => f.IsKeepSuggested);
+            if (keepItem != null && group.Files.IndexOf(keepItem) != 0)
+            {
+                group.Files.Remove(keepItem);
+                group.Files.Insert(0, keepItem);
+            }
+
+            group.MaxScore = Math.Round(minGroupScore, 1);
+            group.GroupTitle = GenerateGroupTitle(group);
+            result.Add(group);
+        }
+
+        progress?.Report(100);
+        return result
+            .OrderByDescending(g => g.MaxScore)
+            .ThenByDescending(g => g.FileCount)
+            .ToList();
     }
 
-    /// <summary>
-    /// 计算两个文件的重复分数
-    /// </summary>
-    private static double CalculateDuplicateScore(
-        MusicFileInfo file1,
-        MusicFileInfo file2,
-        AppSettings settings,
-        out string similarityType)
+    /// <summary>按加权规则计算两个文件的相似度分数（0-100）</summary>
+    public static double CalculateScore(MusicFileInfo a, MusicFileInfo b, MatchRule rule)
     {
-        var scores = new List<(double score, string type)>();
+        var totalWeight = 0.0;
+        var totalScore = 0.0;
 
-        // 1. 文件名相似度
-        var cleanedName1 = StringSimilarity.CleanFileName(file1.FileName);
-        var cleanedName2 = StringSimilarity.CleanFileName(file2.FileName);
-        var nameScore = StringSimilarity.CalculateSimilarity(cleanedName1, cleanedName2);
-        scores.Add((nameScore, "文件名"));
-
-        // 2. 标题相似度（来自元数据或文件名推断）
-        if (!string.IsNullOrEmpty(file1.Title) && !string.IsNullOrEmpty(file2.Title))
+        void Add(double weight, double sim)
         {
-            var normalizedTitle1 = StringSimilarity.Normalize(file1.Title);
-            var normalizedTitle2 = StringSimilarity.Normalize(file2.Title);
-            var titleScore = StringSimilarity.CalculateSimilarity(normalizedTitle1, normalizedTitle2);
-            scores.Add((titleScore, "标题"));
+            if (weight <= 0) return;
+            totalWeight += weight;
+            totalScore += weight * sim;
         }
 
-        // 3. 艺术家相似度
-        if (!string.IsNullOrEmpty(file1.Artist) && !string.IsNullOrEmpty(file2.Artist))
+        var nameA = StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(a.FileName));
+        var nameB = StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(b.FileName));
+        Add(rule.FileNameWeight, StringSimilarity.NormalizedSimilarity(nameA, nameB));
+
+        if (!string.IsNullOrWhiteSpace(a.Title) && !string.IsNullOrWhiteSpace(b.Title))
+            Add(rule.TitleWeight, StringSimilarity.NormalizedSimilarity(a.Title, b.Title));
+
+        if (!string.IsNullOrWhiteSpace(a.Artist) && !string.IsNullOrWhiteSpace(b.Artist))
+            Add(rule.ArtistWeight, StringSimilarity.NormalizedSimilarity(a.Artist, b.Artist));
+
+        if (!string.IsNullOrWhiteSpace(a.Album) && !string.IsNullOrWhiteSpace(b.Album))
+            Add(rule.AlbumWeight, StringSimilarity.NormalizedSimilarity(a.Album, b.Album));
+
+        if (a.Duration > TimeSpan.Zero && b.Duration > TimeSpan.Zero)
         {
-            var normalizedArtist1 = StringSimilarity.Normalize(file1.Artist);
-            var normalizedArtist2 = StringSimilarity.Normalize(file2.Artist);
-            var artistScore = StringSimilarity.CalculateSimilarity(normalizedArtist1, normalizedArtist2);
-            scores.Add((artistScore, "艺术家"));
+            var diff = Math.Abs((a.Duration - b.Duration).TotalSeconds);
+            var durSim = diff <= rule.DurationToleranceSeconds
+                ? 100.0
+                : Math.Max(0, 100.0 - (diff - rule.DurationToleranceSeconds) * 3.0);
+            Add(rule.DurationWeight, durSim);
         }
 
-        // 4. 专辑相似度
-        if (!string.IsNullOrEmpty(file1.Album) && !string.IsNullOrEmpty(file2.Album))
-        {
-            var normalizedAlbum1 = StringSimilarity.Normalize(file1.Album);
-            var normalizedAlbum2 = StringSimilarity.Normalize(file2.Album);
-            var albumScore = StringSimilarity.CalculateSimilarity(normalizedAlbum1, normalizedAlbum2);
-            scores.Add((albumScore, "专辑"));
-        }
-
-        // 5. 文件大小相似度
-        if (settings.CompareFileSize)
-        {
-            var sizeDiff = Math.Abs(file1.FileSize - file2.FileSize);
-            var sizeScore = sizeDiff <= settings.FileSizeTolerance ? 100.0 :
-                100.0 * (1.0 - (double)(sizeDiff - settings.FileSizeTolerance) / Math.Max(file1.FileSize, file2.FileSize));
-            sizeScore = Math.Max(0, sizeScore);
-            scores.Add((sizeScore, "文件大小"));
-        }
-
-        if (scores.Count == 0)
-        {
-            similarityType = "未知";
-            return 0;
-        }
-
-        // 加权综合评分：文件名权重最高，元数据次之
-        var weightedScore = scores.Average(s => s.score);
-        var bestMatch = scores.MaxBy(s => s.score);
-        similarityType = bestMatch.type;
-
-        return weightedScore;
+        if (totalWeight <= 0) return 0;
+        return Math.Round(totalScore / totalWeight, 2);
     }
 
-    /// <summary>
-    /// 生成重复组的标题描述
-    /// </summary>
+    /// <summary>根据保留策略选出要保留的文件下标</summary>
+    private static int DetermineKeepFile(List<MusicFileInfo> files, List<int> members, KeepPreference pref)
+    {
+        return pref switch
+        {
+            KeepPreference.Largest => members.OrderByDescending(i => files[i].FileSize).First(),
+            KeepPreference.Smallest => members.OrderBy(i => files[i].FileSize).First(),
+            KeepPreference.MostMetadata => members
+                .OrderByDescending(i => MetadataRichness(files[i]))
+                .ThenByDescending(i => files[i].FileSize)
+                .First(),
+            KeepPreference.Newest => members
+                .OrderByDescending(i => new FileInfo(files[i].FilePath).LastWriteTime)
+                .First(),
+            KeepPreference.Oldest => members
+                .OrderBy(i => new FileInfo(files[i].FilePath).LastWriteTime)
+                .First(),
+            _ => members.OrderByDescending(i => files[i].FileSize).First()
+        };
+    }
+
+    private static int MetadataRichness(MusicFileInfo f)
+    {
+        var n = 0;
+        if (!string.IsNullOrWhiteSpace(f.Title)) n++;
+        if (!string.IsNullOrWhiteSpace(f.Artist)) n++;
+        if (!string.IsNullOrWhiteSpace(f.Album)) n++;
+        if (f.Duration > TimeSpan.Zero) n++;
+        return n;
+    }
+
+    private static IEnumerable<string> BucketKeysFor(MusicFileInfo f)
+    {
+        var normName = StringSimilarity.CleanFileName(
+            Path.GetFileNameWithoutExtension(f.FileName)).ToLowerInvariant().Trim();
+
+        if (normName.Length > 0)
+            yield return "n:" + normName[..Math.Min(3, normName.Length)];
+
+        if (!string.IsNullOrWhiteSpace(f.Title))
+        {
+            var t = f.Title.Trim().ToLowerInvariant();
+            yield return "t:" + t[..Math.Min(3, t.Length)];
+        }
+
+        if (f.Duration > TimeSpan.Zero)
+        {
+            var sec = (int)f.Duration.TotalSeconds;
+            yield return "d:" + (sec / 5);
+        }
+    }
+
     private static string GenerateGroupTitle(DuplicateGroup group)
     {
-        var mainFile = group.Files.FirstOrDefault(f => f.IsKeepSuggested)?.FileInfo;
-        if (mainFile == null) return "重复文件组";
+        var keepFile = group.Files.FirstOrDefault(f => f.IsKeepSuggested)?.FileInfo
+                       ?? group.Files.FirstOrDefault()?.FileInfo;
+        if (keepFile == null) return "重复文件组";
 
-        var title = !string.IsNullOrEmpty(mainFile.Title) ? mainFile.Title : StringSimilarity.CleanFileName(mainFile.FileName);
-        if (!string.IsNullOrEmpty(mainFile.Artist))
-            title = $"{mainFile.Artist} - {title}";
+        var title = !string.IsNullOrWhiteSpace(keepFile.Title)
+            ? keepFile.Title
+            : StringSimilarity.CleanFileName(Path.GetFileNameWithoutExtension(keepFile.FileName));
 
-        return title;
+        return !string.IsNullOrWhiteSpace(keepFile.Artist)
+            ? $"{keepFile.Artist} - {title}"
+            : title;
     }
 }
+

@@ -20,16 +20,10 @@
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
   </ItemGroup>
 
-  <!-- 嵌入资源文件 -->
+  <!-- WPF Pack 资源：JSON 本地化文件（通过 Application.GetResourceStream 加载） -->
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Strings.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Strings.en-US.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.en-US.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <Resource Include="Resources\Strings.zh-CN.json" />
+    <Resource Include="Resources\Strings.en-US.json" />
   </ItemGroup>
 
 </Project>

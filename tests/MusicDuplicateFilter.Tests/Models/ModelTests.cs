@@ -61,13 +61,11 @@ public class ModelTests
     [Fact]
     public void AppSettings_Load_ShouldReturnDefaultsWhenNoFile()
     {
-        // 确保上次测试的保存文件不会影响本测试
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "MusicDuplicateFilter", "settings.json");
-        if (File.Exists(settingsPath)) File.Delete(settingsPath);
+        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".json");
+        // Ensure no file exists at this path
+        if (File.Exists(tempPath)) File.Delete(tempPath);
 
-        var settings = AppSettings.Load();
+        var settings = AppSettings.Load(tempPath);
         Assert.NotNull(settings);
         Assert.NotEmpty(settings.MusicExtensions);
         Assert.True(settings.IncludeSubdirectories);
@@ -77,21 +75,26 @@ public class ModelTests
     [Fact]
     public void AppSettings_SaveAndLoad_ShouldPersist()
     {
-        var settings = new AppSettings
+        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".json");
+        try
         {
-            Language = "en-US",
-            FileNameSimilarityThreshold = 90,
-            IncludeSubdirectories = false
-        };
+            var settings = new AppSettings
+            {
+                Language = "en-US",
+                FileNameSimilarityThreshold = 90,
+                IncludeSubdirectories = false
+            };
 
-        // This test verifies the save/load roundtrip
-        // Note: Save creates a real file, but it goes to LocalAppData
-        settings.Save();
-        var loaded = AppSettings.Load();
+            settings.Save(tempPath);
+            var loaded = AppSettings.Load(tempPath);
 
-        // Since Load will load the saved file, values should match
-        Assert.Equal("en-US", loaded.Language);
-        Assert.Equal(90, loaded.FileNameSimilarityThreshold);
-        Assert.False(loaded.IncludeSubdirectories);
+            Assert.Equal("en-US", loaded.Language);
+            Assert.Equal(90, loaded.FileNameSimilarityThreshold);
+            Assert.False(loaded.IncludeSubdirectories);
+        }
+        finally
+        {
+            if (File.Exists(tempPath)) File.Delete(tempPath);
+        }
     }
 }

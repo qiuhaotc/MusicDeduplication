@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,15 +30,27 @@ public partial class MainViewModel : ViewModelBase
         _fileOperationService = fileOperationService;
         _logService = logService;
         _loc = localizationService;
+
+        // 加载已保存的目录列表
+        var settings = Models.AppSettings.Load();
+        foreach (var dir in settings.ScanDirectories)
+            ScanDirectories.Add(dir);
     }
+
+    // ===== 本地化代理（XAML 通过 {Binding L[Key]} 绑定）=====
+    public Services.LocalizationProvider L => Services.LocalizationProvider.Current;
 
     // ===== 属性 =====
 
-    private string _scanDirectory = string.Empty;
-    public string ScanDirectory
+    /// <summary>扫描目录列表</summary>
+    public ObservableCollection<string> ScanDirectories { get; } = [];
+
+    private string _newDirectoryInput = string.Empty;
+    /// <summary>新目录输入框内容</summary>
+    public string NewDirectoryInput
     {
-        get => _scanDirectory;
-        set => SetProperty(ref _scanDirectory, value);
+        get => _newDirectoryInput;
+        set => SetProperty(ref _newDirectoryInput, value);
     }
 
     private string _statusText = string.Empty;
@@ -48,18 +60,12 @@ public partial class MainViewModel : ViewModelBase
         set => SetProperty(ref _statusText, value);
     }
 
-    private int _scanProgress;
-    public int ScanProgress
+    private int _overallProgress;
+    /// <summary>总体扫描进度（0-100），用于底部进度条</summary>
+    public int OverallProgress
     {
-        get => _scanProgress;
-        set => SetProperty(ref _scanProgress, value);
-    }
-
-    private int _detectProgress;
-    public int DetectProgress
-    {
-        get => _detectProgress;
-        set => SetProperty(ref _detectProgress, value);
+        get => _overallProgress;
+        set => SetProperty(ref _overallProgress, value);
     }
 
     private bool _isScanning;
@@ -95,105 +101,131 @@ public partial class MainViewModel : ViewModelBase
 
     public ObservableCollection<Models.DuplicateGroup> DuplicateGroups { get; } = [];
 
-    private Models.DuplicateGroup? _selectedGroup;
-    public Models.DuplicateGroup? SelectedGroup
-    {
-        get => _selectedGroup;
-        set => SetProperty(ref _selectedGroup, value);
-    }
-
     // ===== 命令 =====
 
-    /// <summary>浏览目录</summary>
+    /// <summary>将输入框中的目录添加到列表；若输入为空则打开文件夹选择对话框</summary>
     [RelayCommand]
-    private void BrowseDirectory()
+    private void AddDirectory()
     {
-        var dialog = new System.Windows.Forms.FolderBrowserDialog
+        var dir = NewDirectoryInput.Trim();
+        if (string.IsNullOrEmpty(dir))
         {
-            Description = _loc.GetString("Main.ScanDirectory"),
-            UseDescriptionForTitle = true
-        };
-
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            ScanDirectory = dialog.SelectedPath;
+            var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = _loc.GetString("Main.ScanDirectory"),
+                UseDescriptionForTitle = true
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                AddDirectoryToList(dialog.SelectedPath);
         }
+        else
+        {
+            AddDirectoryToList(dir);
+            NewDirectoryInput = string.Empty;
+        }
+    }
+
+    /// <summary>从列表中移除目录</summary>
+    [RelayCommand]
+    private void RemoveDirectory(string? dir)
+    {
+        if (!string.IsNullOrEmpty(dir))
+            ScanDirectories.Remove(dir);
+    }
+
+    private void AddDirectoryToList(string dir)
+    {
+        if (!ScanDirectories.Contains(dir, StringComparer.OrdinalIgnoreCase))
+            ScanDirectories.Add(dir);
     }
 
     /// <summary>开始扫描</summary>
     [RelayCommand]
     private async Task StartScanAsync()
     {
-        if (string.IsNullOrWhiteSpace(ScanDirectory))
-        {
-            BrowseDirectory();
-            if (string.IsNullOrWhiteSpace(ScanDirectory))
-                return;
-        }
-
-        if (!Directory.Exists(ScanDirectory))
+        if (ScanDirectories.Count == 0)
         {
             System.Windows.MessageBox.Show(
-                $"目录不存在: {ScanDirectory}",
+                _loc.GetString("Main.NoDirectories"),
                 _loc.GetString("App.Title"),
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Warning);
-            return;
+            AddDirectory();
+            if (ScanDirectories.Count == 0) return;
         }
 
         IsScanning = true;
         DuplicateGroups.Clear();
         StatusText = _loc.GetString("Main.Scanning");
-        ScanProgress = 0;
-        DetectProgress = 0;
+        OverallProgress = 0;
+        FilesFoundText = string.Empty;
+        SpaceSavingText = string.Empty;
 
         _scanCts = new CancellationTokenSource();
         var settings = Models.AppSettings.Load();
 
         try
         {
-            _logService.Info($"开始扫描目录: {ScanDirectory}");
+            var dirs = ScanDirectories.ToList();
+            _logService.Info($"Starting scan of {dirs.Count} directories");
 
-            // 阶段1: 扫描文件
-            var files = await _fileScanService.ScanDirectoryAsync(
-                ScanDirectory,
-                settings.MusicExtensions,
-                settings.IncludeSubdirectories,
-                _scanCts.Token);
+            // 阶段1：扫描文件（进度 0-40%）
+            _fileScanService.ProgressChanged += OnScanProgress;
+            List<Models.MusicFileInfo> files;
+            try
+            {
+                files = await _fileScanService.ScanDirectoriesAsync(
+                    dirs,
+                    settings.MusicExtensions,
+                    settings.IncludeSubdirectories,
+                    settings.MaxParallelism,
+                    _scanCts.Token);
+            }
+            finally
+            {
+                _fileScanService.ProgressChanged -= OnScanProgress;
+            }
 
             FilesFoundText = _loc.GetString("Main.FilesFound", files.Count);
-            _logService.Info($"扫描完成，找到 {files.Count} 个音乐文件");
+            _logService.Info($"Scan complete, found {files.Count} music files");
 
             if (files.Count == 0)
             {
                 StatusText = _loc.GetString("Main.NoResults");
+                OverallProgress = 100;
                 return;
             }
 
-            // 阶段2: 检测重复
-            StatusText = "正在检测重复...";
+            // 阶段2：检测重复（进度 40-100%）
+            StatusText = _loc.GetString("Main.Detecting");
 
-            var progress = new Progress<int>(p => DetectProgress = p);
+            var progress = new Progress<int>(p => OverallProgress = 40 + p * 60 / 100);
             var groups = await _duplicateDetector.DetectDuplicatesAsync(
                 files, settings, progress, _scanCts.Token);
 
             foreach (var group in groups)
                 DuplicateGroups.Add(group);
 
+            // 保存目录列表到设置
+            settings.ScanDirectories = ScanDirectories.ToList();
+            settings.Save();
+
             UpdateSummary();
-            _logService.Info($"重复检测完成，发现 {groups.Count} 组重复文件");
+            StatusText = _loc.GetString("Main.ScanComplete", groups.Count);
+            OverallProgress = 100;
+            _logService.Info($"Duplicate detection complete, found {groups.Count} groups");
         }
         catch (OperationCanceledException)
         {
-            StatusText = "扫描已取消";
-            _logService.Info("扫描被用户取消");
+            StatusText = _loc.GetString("Main.ScanCancelled");
+            _logService.Info("Scan cancelled by user");
         }
         catch (Exception ex)
         {
-            StatusText = $"扫描出错: {ex.Message}";
-            _logService.Error("扫描过程出错", ex);
+            StatusText = _loc.GetString("Main.ScanError", ex.Message);
+            _logService.Error("Error deleting files", ex);
             System.Windows.MessageBox.Show(
-                $"扫描过程中发生错误:\n{ex.Message}",
+                $"扫描过程中发生错误\n{ex.Message}",
                 _loc.GetString("App.Title"),
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
@@ -206,12 +238,12 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    private void OnScanProgress(object? sender, int percent)
+        => OverallProgress = percent * 40 / 100;
+
     /// <summary>停止扫描</summary>
     [RelayCommand]
-    private void StopScan()
-    {
-        _scanCts?.Cancel();
-    }
+    private void StopScan() => _scanCts?.Cancel();
 
     /// <summary>删除选中文件</summary>
     [RelayCommand]
@@ -226,43 +258,52 @@ public partial class MainViewModel : ViewModelBase
         if (selectedFiles.Count == 0)
         {
             System.Windows.MessageBox.Show(
-                "请先选择要删除的文件",
+                _loc.GetString("Delete.NoSelection"),
                 _loc.GetString("App.Title"),
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Information);
             return;
         }
 
-        // 确认对话框
-        var message = _loc.GetString("Delete.ConfirmMessage", selectedFiles.Count);
+        // 验证每个组至少保留一个文件
+        var violatingGroups = DuplicateGroups
+            .Where(g => g.Files.All(f => f.IsSelectedForDeletion))
+            .ToList();
+
+        if (violatingGroups.Count > 0)
+        {
+            System.Windows.MessageBox.Show(
+                _loc.GetString("Delete.GroupConstraint"),
+                _loc.GetString("App.Title"),
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
         var result = System.Windows.MessageBox.Show(
-            message,
+            _loc.GetString("Delete.ConfirmMessage", selectedFiles.Count),
             _loc.GetString("Delete.ConfirmTitle"),
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question);
 
-        if (result != System.Windows.MessageBoxResult.Yes)
-            return;
+        if (result != System.Windows.MessageBoxResult.Yes) return;
 
         try
         {
-            StatusText = "正在删除...";
+            StatusText = _loc.GetString("Main.Deleting");
 
-            var progress = new Progress<int>(p => ScanProgress = p);
+            var progress = new Progress<int>(p => OverallProgress = p);
             var successCount = await _fileOperationService.MoveToRecycleBinAsync(selectedFiles, progress);
 
             _logService.LogDeletion(selectedFiles.Take(successCount));
 
-            // 从列表中移除已删除的文件
+            // 从列表中移除已删除的文件并清理空组
             foreach (var group in DuplicateGroups.ToList())
             {
-                var toRemove = group.Files
-                    .Where(f => f.IsSelectedForDeletion && f.FileInfo.FilePath != null)
-                    .ToList();
+                var toRemove = group.Files.Where(f => f.IsSelectedForDeletion).ToList();
                 foreach (var item in toRemove)
                     group.Files.Remove(item);
 
-                // 如果组内只剩一个文件，移除整个组
                 if (group.Files.Count <= 1)
                     DuplicateGroups.Remove(group);
             }
@@ -277,7 +318,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            _logService.Error("删除文件时出错", ex);
+            _logService.Error("Error deleting files", ex);
             System.Windows.MessageBox.Show(
                 _loc.GetString("Delete.Failed"),
                 _loc.GetString("App.Title"),
@@ -287,6 +328,7 @@ public partial class MainViewModel : ViewModelBase
         finally
         {
             StatusText = _loc.GetString("Main.Ready");
+            OverallProgress = 0;
         }
     }
 
@@ -295,41 +337,52 @@ public partial class MainViewModel : ViewModelBase
     private void OpenSettings()
     {
         var settingsVm = App.Services.GetRequiredService<SettingsViewModel>();
-        var settingsWindow = new Views.SettingsWindow(settingsVm);
-        settingsWindow.Owner = System.Windows.Application.Current.MainWindow;
-        settingsWindow.ShowDialog();
-    }
-
-    /// <summary>预览选中的重复组</summary>
-    [RelayCommand]
-    private void PreviewGroup()
-    {
-        if (SelectedGroup == null) return;
-
-        var previewVm = new DuplicatePreviewViewModel(SelectedGroup, _fileOperationService, _loc);
-        var previewWindow = new Views.DuplicatePreviewWindow(previewVm)
+        var settingsWindow = new Views.SettingsWindow(settingsVm)
         {
             Owner = System.Windows.Application.Current.MainWindow
         };
-        previewWindow.ShowDialog();
+        settingsWindow.ShowDialog();
     }
 
-    /// <summary>全选</summary>
+    /// <summary>预览重复组（由 XAML CommandParameter 传入 DuplicateGroup 实例）</summary>
+    [RelayCommand]
+    private void PreviewGroup(Models.DuplicateGroup? group)
+    {
+        if (group == null) return;
+
+        try
+        {
+            var previewVm = new DuplicatePreviewViewModel(group, _fileOperationService, _loc);
+            var previewWindow = new Views.DuplicatePreviewWindow(previewVm)
+            {
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            previewWindow.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            _logService.Error("Preview failed", ex);
+            System.Windows.MessageBox.Show(
+                $"预览失败：{ex.Message}",
+                _loc.GetString("App.Title"),
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>全选推荐删除项（非保留文件设为待删除）</summary>
     [RelayCommand]
     private void SelectAll()
     {
         foreach (var group in DuplicateGroups)
-        foreach (var file in group.Files.Where(f => !f.IsKeepSuggested))
-            file.IsSelectedForDeletion = true;
-
-        foreach (var group in DuplicateGroups)
-        foreach (var file in group.Files.Where(f => f.IsKeepSuggested))
-            file.IsSelectedForDeletion = false;
-
+        {
+            foreach (var file in group.Files)
+                file.IsSelectedForDeletion = !file.IsKeepSuggested;
+        }
         UpdateSummary();
     }
 
-    /// <summary>取消全选</summary>
+    /// <summary>取消所有选中</summary>
     [RelayCommand]
     private void DeselectAll()
     {
@@ -338,6 +391,62 @@ public partial class MainViewModel : ViewModelBase
             file.IsSelectedForDeletion = false;
 
         UpdateSummary();
+    }
+
+    /// <summary>导出重复文件信息为 JSON 文件</summary>
+    [RelayCommand]
+    private void ExportDuplicates()
+    {
+        if (DuplicateGroups.Count == 0) return;
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "导出重复文件信息",
+            FileName = $"duplicate{DateTime.Now:yyyyMMddHHmmss}",
+            DefaultExt = ".json",
+            Filter = "JSON 文件 (*.json)|*.json"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var data = DuplicateGroups.Select(group =>
+                group.Files.Select(f => new
+                {
+                    title = f.FileInfo.Title,
+                    fileName = System.IO.Path.GetFileName(f.FileInfo.FilePath),
+                    location = f.FileInfo.FilePath,
+                    keep = f.IsKeepSuggested,
+                    singer = f.FileInfo.Artist,
+                    similarity = (int)Math.Round(f.SimilarityScore)
+                }).ToArray()
+            ).ToArray();
+
+            var json = System.Text.Json.JsonSerializer.Serialize(
+                data,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+            System.IO.File.WriteAllText(dialog.FileName, json, System.Text.Encoding.UTF8);
+
+            System.Windows.MessageBox.Show(
+                $"已成功导出到：\n{dialog.FileName}",
+                "导出成功",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            _logService.Error("Export duplicates failed", ex);
+            System.Windows.MessageBox.Show(
+                $"导出失败：{ex.Message}",
+                _loc.GetString("App.Title"),
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
     }
 
     private void UpdateSummary()

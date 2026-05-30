@@ -1,9 +1,8 @@
-<Window x:Class="MusicDuplicateFilter.Views.SettingsWindow"
+﻿<Window x:Class="MusicDuplicateFilter.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:MusicDuplicateFilter.ViewModels"
-        Title="设置"
-        Height="520" Width="500"
+        Title="{Binding L[Settings.Title]}"
+        Height="680" Width="560"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="#F5F5F5">
@@ -15,102 +14,259 @@
 
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <!-- 扫描选项 -->
-                <GroupBox Header="扫描选项" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
-                    <StackPanel Margin="10">
-                        <CheckBox Content="包含子目录"
+
+                <!-- ===== 扫描选项 ===== -->
+                <GroupBox Header="{Binding L[Settings.ScanOptions]}"
+                          FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12">
+                    <StackPanel Margin="10,8">
+                        <CheckBox Content="{Binding L[Settings.IncludeSubdirectories]}"
                                   IsChecked="{Binding IncludeSubdirectories}"
                                   FontSize="13" Margin="0,0,0,8" />
-                        <TextBlock Text="文件扩展名（用分号或逗号分隔）:" FontSize="13" Margin="0,8,0,4" />
+
+                        <TextBlock Text="{Binding L[Settings.Extensions]}" FontSize="13" Margin="0,4,0,4" />
                         <TextBox Text="{Binding ExtensionsText, UpdateSourceTrigger=PropertyChanged}"
                                  Height="30" VerticalContentAlignment="Center" FontSize="13" />
-                        <TextBlock Text="例如: .mp3; .flac; .wav; .ogg" FontSize="11" Foreground="#999"
-                                   Margin="0,4,0,0" />
-                    </StackPanel>
-                </GroupBox>
+                        <TextBlock Text="{Binding L[Settings.ExtensionsHint]}"
+                                   FontSize="11" Foreground="#999" Margin="0,4,0,0" />
 
-                <!-- 相似度阈值 -->
-                <GroupBox Header="相似度阈值" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
-                    <StackPanel Margin="10">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Margin="0,10,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="80" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="文件名相似度阈值:" VerticalAlignment="Center" FontSize="13" />
-                            <Slider Grid.Column="1" Minimum="50" Maximum="100"
-                                    Value="{Binding FileNameThreshold}"
-                                    TickFrequency="5" IsSnapToTickEnabled="True" />
-                            <TextBlock Grid.Column="2" Text="{Binding FileNameThreshold, StringFormat={}{0}%}"
-                                       VerticalAlignment="Center" FontSize="13" Margin="8,0,0,0" />
-                        </Grid>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="200" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="60" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="元数据相似度阈值:" VerticalAlignment="Center" FontSize="13" />
-                            <Slider Grid.Column="1" Minimum="50" Maximum="100"
-                                    Value="{Binding MetadataThreshold}"
-                                    TickFrequency="5" IsSnapToTickEnabled="True" />
-                            <TextBlock Grid.Column="2" Text="{Binding MetadataThreshold, StringFormat={}{0}%}"
-                                       VerticalAlignment="Center" FontSize="13" Margin="8,0,0,0" />
+                            <TextBlock Text="{Binding L[Settings.MaxParallelism]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding MaxParallelism, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="30" VerticalContentAlignment="Center"
+                                     FontSize="13" TextAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding L[Settings.MaxParallelismHint]}"
+                                       FontSize="11" Foreground="#999"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" />
                         </Grid>
                     </StackPanel>
                 </GroupBox>
 
-                <!-- 文件大小比较 -->
-                <GroupBox Header="文件大小比较" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
-                    <StackPanel Margin="10">
-                        <CheckBox Content="启用文件大小比较"
+                <!-- ===== 保留策略 ===== -->
+                <GroupBox Header="{Binding L[Settings.KeepPolicy]}"
+                          FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12">
+                    <StackPanel Margin="10,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.KeepPreference]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding KeepPreferenceItems}"
+                                      SelectedIndex="{Binding SelectedKeepPreference}"
+                                      Height="32" FontSize="13" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ===== 相似度配置 ===== -->
+                <GroupBox Header="{Binding L[Settings.SimilarityConfig]}"
+                          FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12">
+                    <StackPanel Margin="10,8">
+
+                        <!-- 阈值 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.MatchThreshold]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="50" Maximum="100"
+                                    Value="{Binding MatchThreshold}"
+                                    TickFrequency="5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding MatchThreshold, StringFormat={}{0:F0}%}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="8,0,0,0" />
+                        </Grid>
+
+                        <!-- 时长容差 -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.DurationTolerance]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding DurationToleranceSec, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:F1}}"
+                                     Height="30" VerticalContentAlignment="Center"
+                                     FontSize="13" TextAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding L[Settings.Seconds]}"
+                                       FontSize="11" Foreground="#999"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </Grid>
+
+                        <Separator Margin="0,0,0,10" />
+
+                        <!-- 权重标题 -->
+                        <TextBlock Text="{Binding L[Settings.Weights]}"
+                                   FontSize="12" Foreground="#555" Margin="0,0,0,6" />
+
+                        <!-- 文件名权重 -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="50" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.FileNameWeight]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="3"
+                                    Value="{Binding FileNameWeight}"
+                                    TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding FileNameWeight, StringFormat={}{0:F1}}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="6,0,0,0" />
+                        </Grid>
+
+                        <!-- 标题权重 -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="50" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.TitleWeight]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="3"
+                                    Value="{Binding TitleWeight}"
+                                    TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding TitleWeight, StringFormat={}{0:F1}}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="6,0,0,0" />
+                        </Grid>
+
+                        <!-- 艺术家权重 -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="50" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.ArtistWeight]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="3"
+                                    Value="{Binding ArtistWeight}"
+                                    TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding ArtistWeight, StringFormat={}{0:F1}}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="6,0,0,0" />
+                        </Grid>
+
+                        <!-- 专辑权重 -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="50" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.AlbumWeight]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="3"
+                                    Value="{Binding AlbumWeight}"
+                                    TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding AlbumWeight, StringFormat={}{0:F1}}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="6,0,0,0" />
+                        </Grid>
+
+                        <!-- 时长权重 -->
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="50" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding L[Settings.DurationWeight]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="3"
+                                    Value="{Binding DurationWeight}"
+                                    TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding DurationWeight, StringFormat={}{0:F1}}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="6,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- ===== 文件大小比较 ===== -->
+                <GroupBox Header="{Binding L[Settings.FileSizeComparison]}"
+                          FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12">
+                    <StackPanel Margin="10,8">
+                        <CheckBox Content="{Binding L[Settings.EnableFileSizeComparison]}"
                                   IsChecked="{Binding CompareFileSize}"
                                   FontSize="13" Margin="0,0,0,8" />
                         <Grid IsEnabled="{Binding CompareFileSize}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="100" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="文件大小容差 (KB):" VerticalAlignment="Center" FontSize="13" />
-                            <TextBox Grid.Column="1" Text="{Binding FileSizeTolerance}"
-                                     Height="30" VerticalContentAlignment="Center" FontSize="13" />
+                            <TextBlock Text="{Binding L[Settings.FileSizeTolerance]}"
+                                       VerticalAlignment="Center" FontSize="13" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding FileSizeTolerance, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="30" VerticalContentAlignment="Center"
+                                     FontSize="13" TextAlignment="Center" />
                             <TextBlock Grid.Column="2" Text="KB" VerticalAlignment="Center"
                                        FontSize="13" Margin="8,0,0,0" />
                         </Grid>
                     </StackPanel>
                 </GroupBox>
 
-                <!-- 语言和日志 -->
-                <GroupBox Header="其他" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
-                    <StackPanel Margin="10">
+                <!-- ===== 语言与日志 ===== -->
+                <GroupBox Header="{Binding L[Settings.Others]}"
+                          FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12">
+                    <StackPanel Margin="10,8">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="80" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="语言:" VerticalAlignment="Center" FontSize="13" />
+                            <TextBlock Text="{Binding L[Settings.Language]}"
+                                       VerticalAlignment="Center" FontSize="13" />
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding Languages}"
                                       SelectedItem="{Binding SelectedLanguage}"
                                       Height="30" FontSize="13" />
                         </Grid>
-                        <CheckBox Content="启用操作日志"
+                        <CheckBox Content="{Binding L[Settings.EnableLogging]}"
                                   IsChecked="{Binding EnableLogging}"
                                   FontSize="13" />
                     </StackPanel>
                 </GroupBox>
+
             </StackPanel>
         </ScrollViewer>
 
-        <!-- 按钮 -->
+        <!-- 按钮行 -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
                     Margin="0,12,0,0">
-            <Button Content="保存" Command="{Binding SaveCommand}"
+            <Button Content="{Binding L[Settings.Save]}"
+                    Command="{Binding SaveCommand}"
                     Style="{StaticResource PrimaryButton}"
                     Width="100" Height="36" Margin="0,0,8,0" />
-            <Button Content="取消" Command="{Binding CancelCommand}"
+            <Button Content="{Binding L[Settings.Cancel]}"
+                    Command="{Binding CancelCommand}"
                     Width="100" Height="36"
                     Background="Transparent" BorderThickness="1" BorderBrush="#DDD"
                     Cursor="Hand" FontSize="14" />

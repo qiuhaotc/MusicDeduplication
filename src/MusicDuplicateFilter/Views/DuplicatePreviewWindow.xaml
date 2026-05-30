@@ -26,19 +26,19 @@
                                    TextWrapping="Wrap" />
                         <TextBlock FontSize="13" Foreground="#555" Margin="0,4,0,0">
                             <Run Text="艺术家: " />
-                            <Run Text="{Binding KeepFile.FileInfo.Artist}" />
+                            <Run Text="{Binding KeepFile.FileInfo.Artist, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock FontSize="13" Foreground="#555">
                             <Run Text="专辑: " />
-                            <Run Text="{Binding KeepFile.FileInfo.Album}" />
+                            <Run Text="{Binding KeepFile.FileInfo.Album, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock FontSize="12" Foreground="#888" Margin="0,2,0,0">
                             <Run Text="大小: " />
-                            <Run Text="{Binding KeepFile.FileInfo.FileSizeDisplay}" />
+                            <Run Text="{Binding KeepFile.FileInfo.FileSizeDisplay, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock FontSize="12" Foreground="#888">
                             <Run Text="时长: " />
-                            <Run Text="{Binding KeepFile.FileInfo.DurationDisplay}" />
+                            <Run Text="{Binding KeepFile.FileInfo.DurationDisplay, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock FontSize="11" Foreground="#AAA" Margin="0,2,0,0"
                                    Text="{Binding KeepFile.FileInfo.FilePath}"
@@ -97,7 +97,7 @@
                                         <TextBlock FontSize="11" Foreground="#888"
                                                    Margin="0,2,0,0">
                                             <Run Text="艺术家: " />
-                                            <Run Text="{Binding FileInfo.Artist}" />
+                                            <Run Text="{Binding FileInfo.Artist, Mode=OneWay}" />
                                         </TextBlock>
                                         <TextBlock FontSize="11" Foreground="#AAA"
                                                    Text="{Binding FileInfo.FilePath}"

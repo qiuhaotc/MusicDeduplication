@@ -9,30 +9,38 @@ namespace MusicDuplicateFilter.Models;
 public class AppSettings
 {
     private static readonly string SettingsFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "MusicDuplicateFilter",
+        AppContext.BaseDirectory,
         "settings.json");
 
-    /// <summary>上次扫描的目录</summary>
-    public string LastScanDirectory { get; set; } = string.Empty;
+    /// <summary>扫描目录列表（支持多目录同时扫描）</summary>
+    public List<string> ScanDirectories { get; set; } = [];
 
     /// <summary>支持的音乐文件扩展名</summary>
     public List<string> MusicExtensions { get; set; } = [".mp3", ".flac", ".wav", ".ogg", ".wma", ".aac", ".m4a"];
 
-    /// <summary>文件名相似度阈值（0-100）</summary>
+    /// <summary>文件名相似度阈值（0-100），保留以向后兼容</summary>
     public int FileNameSimilarityThreshold { get; set; } = 80;
 
-    /// <summary>元数据相似度阈值（0-100）</summary>
+    /// <summary>元数据相似度阈值（0-100），保留以向后兼容</summary>
     public int MetadataSimilarityThreshold { get; set; } = 85;
 
     /// <summary>是否包含子目录扫描</summary>
     public bool IncludeSubdirectories { get; set; } = true;
 
     /// <summary>是否比较文件大小</summary>
-    public bool CompareFileSize { get; set; } = true;
+    public bool CompareFileSize { get; set; } = false;
 
     /// <summary>文件大小比较容差（字节）</summary>
     public long FileSizeTolerance { get; set; } = 1024 * 100; // 100KB
+
+    /// <summary>扫描并行线程数（1-16，默认4）</summary>
+    public int MaxParallelism { get; set; } = 4;
+
+    /// <summary>默认保留文件策略</summary>
+    public KeepPreference KeepPreference { get; set; } = KeepPreference.Largest;
+
+    /// <summary>重复文件匹配规则（权重 + 阈值）</summary>
+    public MatchRule MatchRule { get; set; } = new();
 
     /// <summary>当前语言（zh-CN 或 en-US）</summary>
     public string Language { get; set; } = "zh-CN";
@@ -53,19 +61,22 @@ public class AppSettings
     [JsonIgnore]
     public double WindowHeight { get; set; } = 800;
 
-    /// <summary>加载设置</summary>
-    public static AppSettings Load()
+    /// <summary>加载设置（自动迁移 LastScanDirectory 到 ScanDirectories）</summary>
+    public static AppSettings Load(string? path = null)
     {
+        var filePath = path ?? SettingsFilePath;
         try
         {
-            var dir = Path.GetDirectoryName(SettingsFilePath);
+            var dir = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            if (File.Exists(SettingsFilePath))
+            if (File.Exists(filePath))
             {
-                var json = File.ReadAllText(SettingsFilePath);
-                return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                var json = File.ReadAllText(filePath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+
+                return settings;
             }
         }
         catch
@@ -76,16 +87,17 @@ public class AppSettings
     }
 
     /// <summary>保存设置</summary>
-    public void Save()
+    public void Save(string? path = null)
     {
+        var filePath = path ?? SettingsFilePath;
         try
         {
-            var dir = Path.GetDirectoryName(SettingsFilePath);
+            var dir = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
             var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SettingsFilePath, json);
+            File.WriteAllText(filePath, json);
         }
         catch
         {
