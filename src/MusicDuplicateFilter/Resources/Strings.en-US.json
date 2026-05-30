@@ -30,6 +30,7 @@
   "Group.KeepSuggested": "⭐ Keep",
   "Group.Similarity": "Similarity:",
   "Group.Preview": "Preview",
+  "Group.TransitiveMatchTooltip": "Indirect match: this file's similarity to the kept file is below the threshold.\nIt was grouped via transitive association through other files in this group.\nPlease verify manually before deciding to delete.",
 
   "Delete.ConfirmTitle": "Confirm Delete",
   "Delete.ConfirmMessage": "Move {0} file(s) to Recycle Bin?",
@@ -73,6 +74,8 @@
   "Settings.Other": "Other",
   "Settings.Language": "Language:",
   "Settings.EnableLogging": "Enable operation log",
+  "Settings.AutoCheckTransitiveMatches": "Pre-select transitive matches for deletion (indirect matches)",
+  "Settings.AutoCheckTransitiveMatchesTooltip": "When disabled, files grouped via transitive association (marked with ~) will not be pre-selected; manual review is required before deletion.",
   "Settings.Save": "Save",
   "Settings.Cancel": "Cancel",
   "Settings.Saved": "Settings saved",

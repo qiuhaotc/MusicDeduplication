@@ -96,6 +96,16 @@ MusicDuplicateFilter/
 - **File size** — Optional byte-level comparison with configurable tolerance
 - **Weighted score** — Each dimension carries an adjustable weight; the final 0–100% score determines whether files are grouped as duplicates
 
+## ⚠️ Disclaimer
+
+This tool performs fuzzy matching based on **filename, metadata, and duration**. Results are for reference only and **false positives may occur**:
+
+- Songs with the same name but different content (e.g. different editions, live versions, covers) may be incorrectly flagged as duplicates
+- Files included via transitive association (indirect matches, marked with `~`) are especially worth reviewing manually
+- Deleted files are moved to the system Recycle Bin, but it is still recommended to back up important files before performing bulk deletions
+
+**Please verify results before deleting. The author is not responsible for any data loss caused by incorrect deletions.**
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).

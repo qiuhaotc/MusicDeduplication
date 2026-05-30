@@ -30,6 +30,7 @@
   "Group.KeepSuggested": "⭐ 建议保留",
   "Group.Similarity": "相似度:",
   "Group.Preview": "预览",
+  "Group.TransitiveMatchTooltip": "间接匹配：此文件与保留文件的相似度低于设定阈值，\n通过组内其他文件的传递关联被纳入此组。\n建议手动确认后再决定是否删除。",
 
   "Delete.ConfirmTitle": "确认删除",
   "Delete.ConfirmMessage": "确定要将 {0} 个文件移到回收站吗？",
@@ -73,6 +74,8 @@
   "Settings.Other": "其他",
   "Settings.Language": "语言:",
   "Settings.EnableLogging": "启用操作日志",
+  "Settings.AutoCheckTransitiveMatches": "默认勾选传递性匹配项（间接匹配）",
+  "Settings.AutoCheckTransitiveMatchesTooltip": "关闭后，通过传递关联（~前缀）纳入组的文件将默认不勾选，需手动确认后再删除",
   "Settings.Save": "保存",
   "Settings.Cancel": "取消",
   "Settings.Saved": "设置已保存",

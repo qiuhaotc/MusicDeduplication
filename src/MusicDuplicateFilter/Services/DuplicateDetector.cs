@@ -111,12 +111,14 @@ public class DuplicateDetector : IDuplicateDetector
                     if (score < minGroupScore) minGroupScore = score;
                 }
 
+                var isTransitive = idx != keepIdx && score < rule.Threshold;
                 group.Files.Add(new DuplicateFileItem
                 {
                     FileInfo = files[idx],
                     SimilarityScore = score,
                     IsKeepSuggested = idx == keepIdx,
-                    IsSelectedForDeletion = idx != keepIdx
+                    IsSelectedForDeletion = idx != keepIdx && (!isTransitive || settings.AutoCheckTransitiveMatches),
+                    IsTransitiveMatch = isTransitive
                 });
             }
 

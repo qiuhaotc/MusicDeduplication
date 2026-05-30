@@ -22,6 +22,7 @@ public partial class SettingsViewModel : ViewModelBase
         _compareFileSize = _settings.CompareFileSize;
         _fileSizeTolerance = _settings.FileSizeTolerance / 1024;
         _enableLogging = _settings.EnableLogging;
+        _autoCheckTransitiveMatches = _settings.AutoCheckTransitiveMatches;
         _selectedLanguage = _settings.Language;
         _extensionsText = string.Join("; ", _settings.MusicExtensions);
         _maxParallelism = _settings.MaxParallelism;
@@ -155,6 +156,13 @@ public partial class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _enableLogging, value);
     }
 
+    private bool _autoCheckTransitiveMatches = true;
+    public bool AutoCheckTransitiveMatches
+    {
+        get => _autoCheckTransitiveMatches;
+        set => SetProperty(ref _autoCheckTransitiveMatches, value);
+    }
+
     private string _selectedLanguage = "zh-CN";
     public string SelectedLanguage
     {
@@ -183,6 +191,7 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.MaxParallelism = MaxParallelism;
         _settings.KeepPreference = (Models.KeepPreference)SelectedKeepPreference;
         _settings.EnableLogging = EnableLogging;
+        _settings.AutoCheckTransitiveMatches = AutoCheckTransitiveMatches;
         _settings.Language = SelectedLanguage;
 
         _settings.MatchRule = new Models.MatchRule

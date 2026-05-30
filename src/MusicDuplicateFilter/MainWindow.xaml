@@ -336,14 +336,41 @@
                                                                                HorizontalAlignment="Center" />
                                                                 </Border>
 
-                                                                <!-- 相似度分数徽章（IsKeepSuggested=false 显示）-->
-                                                                <Border Background="#FFE0B2" CornerRadius="4"
-                                                                        Padding="6,3"
+                                                                <!-- 相似度分数徽章（IsKeepSuggested=false 显示）
+                                                                     蓝色 = 传递性匹配（低于阈值，通过其他文件间接关联）
+                                                                     橙色 = 直接匹配（≥ 阈值）-->
+                                                                <Border CornerRadius="4" Padding="6,3"
                                                                         Visibility="{Binding IsKeepSuggested, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                                                                    <TextBlock Text="{Binding ScoreDisplay}"
-                                                                               FontSize="12" FontWeight="Bold"
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Background" Value="#FFE0B2" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsTransitiveMatch}" Value="True">
+                                                                                    <Setter Property="Background" Value="#E3F2FD" />
+                                                                                    <Setter Property="ToolTip">
+                                                                                        <Setter.Value>
+                                                                                            <Binding Path="DataContext.L[Group.TransitiveMatchTooltip]"
+                                                                                                     RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock FontSize="12" FontWeight="Bold"
                                                                                HorizontalAlignment="Center"
-                                                                               Foreground="{Binding SimilarityScore, Converter={StaticResource ScoreToColor}}" />
+                                                                               Text="{Binding ScoreDisplay}">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Foreground" Value="{Binding SimilarityScore, Converter={StaticResource ScoreToColor}}" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsTransitiveMatch}" Value="True">
+                                                                                        <Setter Property="Foreground" Value="#1565C0" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
                                                                 </Border>
 
                                                             </Grid>

@@ -48,6 +48,9 @@ public class AppSettings
     /// <summary>是否启用日志</summary>
     public bool EnableLogging { get; set; } = true;
 
+    /// <summary>传递性匹配项是否默认勾选删除（默认 true）</summary>
+    public bool AutoCheckTransitiveMatches { get; set; } = true;
+
     /// <summary>上一次窗口位置和大小</summary>
     [JsonIgnore]
     public double WindowLeft { get; set; }

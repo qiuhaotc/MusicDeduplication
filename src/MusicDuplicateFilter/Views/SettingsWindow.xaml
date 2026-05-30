@@ -251,7 +251,11 @@
                         </Grid>
                         <CheckBox Content="{Binding L[Settings.EnableLogging]}"
                                   IsChecked="{Binding EnableLogging}"
-                                  FontSize="13" />
+                                  FontSize="13" Margin="0,0,0,8" />
+                        <CheckBox Content="{Binding L[Settings.AutoCheckTransitiveMatches]}"
+                                  IsChecked="{Binding AutoCheckTransitiveMatches}"
+                                  FontSize="13"
+                                  ToolTip="{Binding L[Settings.AutoCheckTransitiveMatchesTooltip]}" />
                     </StackPanel>
                 </GroupBox>
 

@@ -88,8 +88,11 @@ public class DuplicateFileItem : INotifyPropertyChanged
         }
     }
 
-    /// <summary>相似度分数显示（始终显示百分比）</summary>
-    public string ScoreDisplay => $"{SimilarityScore:F0}%";
+    /// <summary>是否为低于阈值的传递性匹配（通过组内其他文件间接关联）</summary>
+    public bool IsTransitiveMatch { get; set; }
+
+    /// <summary>相似度分数显示；传递性匹配加 ~ 前缀并保留一位小数，避免四舍五入后误读为已达阈值</summary>
+    public string ScoreDisplay => IsTransitiveMatch ? $"~{SimilarityScore:F1}%" : $"{SimilarityScore:F0}%";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
