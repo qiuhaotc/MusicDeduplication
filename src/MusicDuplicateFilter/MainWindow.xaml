@@ -97,7 +97,7 @@
                         <TextBlock Text="{Binding FilesFoundText}" FontSize="13" Margin="0,0,16,0" />
                         <TextBlock FontSize="13">
                             <Run Text="重复组: " />
-                            <Run Text="{Binding DuplicateGroups.Count}" FontWeight="Bold" Foreground="#D32F2F" />
+                            <Run Text="{Binding DuplicateGroups.Count, Mode=OneWay}" FontWeight="Bold" Foreground="#D32F2F" />
                         </TextBlock>
                         <TextBlock FontSize="13" Margin="16,0,0,0">
                             <Run Text="可节省: " />
