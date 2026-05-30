@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- ===== App Window ===== -->
+  <data name="App.Title" xml:space="preserve"><value>Music Duplicate Filter</value></data>
+  <data name="App.Description" xml:space="preserve"><value>Scan and remove duplicate music files to save storage space</value></data>
+
+  <!-- ===== Main Window ===== -->
+  <data name="Main.ScanDirectory" xml:space="preserve"><value>Scan Directory</value></data>
+  <data name="Main.Browse" xml:space="preserve"><value>Browse...</value></data>
+  <data name="Main.StartScan" xml:space="preserve"><value>Start Scan</value></data>
+  <data name="Main.StopScan" xml:space="preserve"><value>Stop Scan</value></data>
+  <data name="Main.Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Main.FilesFound" xml:space="preserve"><value>Found {0} music files</value></data>
+  <data name="Main.DuplicateGroups" xml:space="preserve"><value>{0} duplicate groups</value></data>
+  <data name="Main.SpaceSaving" xml:space="preserve"><value>Space saving: {0}</value></data>
+  <data name="Main.DeleteSelected" xml:space="preserve"><value>Delete Selected</value></data>
+  <data name="Main.SelectAll" xml:space="preserve"><value>Select All</value></data>
+  <data name="Main.DeselectAll" xml:space="preserve"><value>Deselect All</value></data>
+  <data name="Main.Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Main.Scanning" xml:space="preserve"><value>Scanning...</value></data>
+  <data name="Main.NoResults" xml:space="preserve"><value>No duplicates found</value></data>
+  <data name="Main.Ready" xml:space="preserve"><value>Ready</value></data>
+
+  <!-- ===== Delete Confirmation ===== -->
+  <data name="Delete.ConfirmTitle" xml:space="preserve"><value>Confirm Deletion</value></data>
+  <data name="Delete.ConfirmMessage" xml:space="preserve"><value>Are you sure you want to move {0} files to the Recycle Bin?\n\nThis operation can be undone (restore from Recycle Bin).</value></data>
+  <data name="Delete.Success" xml:space="preserve"><value>Successfully moved {0} files to the Recycle Bin.</value></data>
+  <data name="Delete.Failed" xml:space="preserve"><value>Some files could not be deleted due to errors.</value></data>
+
+  <!-- ===== Settings Window ===== -->
+  <data name="Settings.Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings.ScanOptions" xml:space="preserve"><value>Scan Options</value></data>
+  <data name="Settings.IncludeSubdirectories" xml:space="preserve"><value>Include Subdirectories</value></data>
+  <data name="Settings.FileExtensions" xml:space="preserve"><value>File Extensions</value></data>
+  <data name="Settings.Thresholds" xml:space="preserve"><value>Similarity Thresholds</value></data>
+  <data name="Settings.FileNameThreshold" xml:space="preserve"><value>File Name Similarity Threshold</value></data>
+  <data name="Settings.MetadataThreshold" xml:space="preserve"><value>Metadata Similarity Threshold</value></data>
+  <data name="Settings.CompareFileSize" xml:space="preserve"><value>Compare File Size</value></data>
+  <data name="Settings.FileSizeTolerance" xml:space="preserve"><value>File Size Tolerance (KB)</value></data>
+  <data name="Settings.Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings.EnableLogging" xml:space="preserve"><value>Enable Logging</value></data>
+  <data name="Settings.Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Settings.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Settings.Saved" xml:space="preserve"><value>Settings saved</value></data>
+
+  <!-- ===== Duplicate Group Display ===== -->
+  <data name="Group.KeepSuggested" xml:space="preserve"><value>Keep Suggested</value></data>
+  <data name="Group.Similarity" xml:space="preserve"><value>Similarity</value></data>
+  <data name="Group.FileName" xml:space="preserve"><value>File Name</value></data>
+  <data name="Group.Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Group.Artist" xml:space="preserve"><value>Artist</value></data>
+  <data name="Group.Album" xml:space="preserve"><value>Album</value></data>
+  <data name="Group.Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Group.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Group.Format" xml:space="preserve"><value>Format</value></data>
+  <data name="Group.Path" xml:space="preserve"><value>Path</value></data>
+
+  <!-- ===== Preview Window ===== -->
+  <data name="Preview.Title" xml:space="preserve"><value>File Preview</value></data>
+  <data name="Preview.KeepFile" xml:space="preserve"><value>Keep File</value></data>
+  <data name="Preview.DuplicateFiles" xml:space="preserve"><value>Duplicate Files</value></data>
+  <data name="Preview.Play" xml:space="preserve"><value>Play</value></data>
+  <data name="Preview.OpenInExplorer" xml:space="preserve"><value>Open in Explorer</value></data>
+
+  <!-- ===== Common ===== -->
+  <data name="Common.OK" xml:space="preserve"><value>OK</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common.Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Common.Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Common.No" xml:space="preserve"><value>No</value></data>
+  <data name="Common.About" xml:space="preserve"><value>About</value></data>
+  <data name="Common.Help" xml:space="preserve"><value>Help</value></data>
+</root>

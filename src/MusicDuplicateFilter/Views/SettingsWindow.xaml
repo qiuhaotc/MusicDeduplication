@@ -1,0 +1,119 @@
+<Window x:Class="MusicDuplicateFilter.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MusicDuplicateFilter.ViewModels"
+        Title="设置"
+        Height="520" Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F5F5">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- 扫描选项 -->
+                <GroupBox Header="扫描选项" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
+                    <StackPanel Margin="10">
+                        <CheckBox Content="包含子目录"
+                                  IsChecked="{Binding IncludeSubdirectories}"
+                                  FontSize="13" Margin="0,0,0,8" />
+                        <TextBlock Text="文件扩展名（用分号或逗号分隔）:" FontSize="13" Margin="0,8,0,4" />
+                        <TextBox Text="{Binding ExtensionsText, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="30" VerticalContentAlignment="Center" FontSize="13" />
+                        <TextBlock Text="例如: .mp3; .flac; .wav; .ogg" FontSize="11" Foreground="#999"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 相似度阈值 -->
+                <GroupBox Header="相似度阈值" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
+                    <StackPanel Margin="10">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="文件名相似度阈值:" VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="50" Maximum="100"
+                                    Value="{Binding FileNameThreshold}"
+                                    TickFrequency="5" IsSnapToTickEnabled="True" />
+                            <TextBlock Grid.Column="2" Text="{Binding FileNameThreshold, StringFormat={}{0}%}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="8,0,0,0" />
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="元数据相似度阈值:" VerticalAlignment="Center" FontSize="13" />
+                            <Slider Grid.Column="1" Minimum="50" Maximum="100"
+                                    Value="{Binding MetadataThreshold}"
+                                    TickFrequency="5" IsSnapToTickEnabled="True" />
+                            <TextBlock Grid.Column="2" Text="{Binding MetadataThreshold, StringFormat={}{0}%}"
+                                       VerticalAlignment="Center" FontSize="13" Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 文件大小比较 -->
+                <GroupBox Header="文件大小比较" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
+                    <StackPanel Margin="10">
+                        <CheckBox Content="启用文件大小比较"
+                                  IsChecked="{Binding CompareFileSize}"
+                                  FontSize="13" Margin="0,0,0,8" />
+                        <Grid IsEnabled="{Binding CompareFileSize}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="文件大小容差 (KB):" VerticalAlignment="Center" FontSize="13" />
+                            <TextBox Grid.Column="1" Text="{Binding FileSizeTolerance}"
+                                     Height="30" VerticalContentAlignment="Center" FontSize="13" />
+                            <TextBlock Grid.Column="2" Text="KB" VerticalAlignment="Center"
+                                       FontSize="13" Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- 语言和日志 -->
+                <GroupBox Header="其他" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16">
+                    <StackPanel Margin="10">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="语言:" VerticalAlignment="Center" FontSize="13" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding Languages}"
+                                      SelectedItem="{Binding SelectedLanguage}"
+                                      Height="30" FontSize="13" />
+                        </Grid>
+                        <CheckBox Content="启用操作日志"
+                                  IsChecked="{Binding EnableLogging}"
+                                  FontSize="13" />
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 按钮 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="0,12,0,0">
+            <Button Content="保存" Command="{Binding SaveCommand}"
+                    Style="{StaticResource PrimaryButton}"
+                    Width="100" Height="36" Margin="0,0,8,0" />
+            <Button Content="取消" Command="{Binding CancelCommand}"
+                    Width="100" Height="36"
+                    Background="Transparent" BorderThickness="1" BorderBrush="#DDD"
+                    Cursor="Hand" FontSize="14" />
+        </StackPanel>
+    </Grid>
+</Window>

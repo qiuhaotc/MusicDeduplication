@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- ===== 应用窗口 ===== -->
+  <data name="App.Title" xml:space="preserve"><value>音乐重复过滤器</value></data>
+  <data name="App.Description" xml:space="preserve"><value>扫描并删除重复的音乐文件，节省存储空间</value></data>
+
+  <!-- ===== 主窗口 ===== -->
+  <data name="Main.ScanDirectory" xml:space="preserve"><value>扫描目录</value></data>
+  <data name="Main.Browse" xml:space="preserve"><value>浏览...</value></data>
+  <data name="Main.StartScan" xml:space="preserve"><value>开始扫描</value></data>
+  <data name="Main.StopScan" xml:space="preserve"><value>停止扫描</value></data>
+  <data name="Main.Settings" xml:space="preserve"><value>设置</value></data>
+  <data name="Main.FilesFound" xml:space="preserve"><value>找到 {0} 个音乐文件</value></data>
+  <data name="Main.DuplicateGroups" xml:space="preserve"><value>{0} 组重复文件</value></data>
+  <data name="Main.SpaceSaving" xml:space="preserve"><value>可节省空间: {0}</value></data>
+  <data name="Main.DeleteSelected" xml:space="preserve"><value>删除选中文件</value></data>
+  <data name="Main.SelectAll" xml:space="preserve"><value>全选</value></data>
+  <data name="Main.DeselectAll" xml:space="preserve"><value>取消全选</value></data>
+  <data name="Main.Preview" xml:space="preserve"><value>预览</value></data>
+  <data name="Main.Scanning" xml:space="preserve"><value>正在扫描...</value></data>
+  <data name="Main.NoResults" xml:space="preserve"><value>未发现重复文件</value></data>
+  <data name="Main.Ready" xml:space="preserve"><value>就绪</value></data>
+
+  <!-- ===== 删除确认对话框 ===== -->
+  <data name="Delete.ConfirmTitle" xml:space="preserve"><value>确认删除</value></data>
+  <data name="Delete.ConfirmMessage" xml:space="preserve"><value>确定要将 {0} 个文件移动到回收站吗？\n\n此操作可以撤销（从回收站恢复）。</value></data>
+  <data name="Delete.Success" xml:space="preserve"><value>已成功将 {0} 个文件移动到回收站。</value></data>
+  <data name="Delete.Failed" xml:space="preserve"><value>删除过程中出现错误，部分文件可能未被删除。</value></data>
+
+  <!-- ===== 设置窗口 ===== -->
+  <data name="Settings.Title" xml:space="preserve"><value>设置</value></data>
+  <data name="Settings.ScanOptions" xml:space="preserve"><value>扫描选项</value></data>
+  <data name="Settings.IncludeSubdirectories" xml:space="preserve"><value>包含子目录</value></data>
+  <data name="Settings.FileExtensions" xml:space="preserve"><value>文件扩展名</value></data>
+  <data name="Settings.Thresholds" xml:space="preserve"><value>相似度阈值</value></data>
+  <data name="Settings.FileNameThreshold" xml:space="preserve"><value>文件名相似度阈值</value></data>
+  <data name="Settings.MetadataThreshold" xml:space="preserve"><value>元数据相似度阈值</value></data>
+  <data name="Settings.CompareFileSize" xml:space="preserve"><value>比较文件大小</value></data>
+  <data name="Settings.FileSizeTolerance" xml:space="preserve"><value>文件大小容差 (KB)</value></data>
+  <data name="Settings.Language" xml:space="preserve"><value>语言</value></data>
+  <data name="Settings.EnableLogging" xml:space="preserve"><value>启用日志</value></data>
+  <data name="Settings.Save" xml:space="preserve"><value>保存</value></data>
+  <data name="Settings.Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Settings.Saved" xml:space="preserve"><value>设置已保存</value></data>
+
+  <!-- ===== 重复组显示 ===== -->
+  <data name="Group.KeepSuggested" xml:space="preserve"><value>建议保留</value></data>
+  <data name="Group.Similarity" xml:space="preserve"><value>相似度</value></data>
+  <data name="Group.FileName" xml:space="preserve"><value>文件名</value></data>
+  <data name="Group.Title" xml:space="preserve"><value>标题</value></data>
+  <data name="Group.Artist" xml:space="preserve"><value>艺术家</value></data>
+  <data name="Group.Album" xml:space="preserve"><value>专辑</value></data>
+  <data name="Group.Size" xml:space="preserve"><value>大小</value></data>
+  <data name="Group.Duration" xml:space="preserve"><value>时长</value></data>
+  <data name="Group.Format" xml:space="preserve"><value>格式</value></data>
+  <data name="Group.Path" xml:space="preserve"><value>路径</value></data>
+
+  <!-- ===== 预览窗口 ===== -->
+  <data name="Preview.Title" xml:space="preserve"><value>文件预览</value></data>
+  <data name="Preview.KeepFile" xml:space="preserve"><value>保留文件</value></data>
+  <data name="Preview.DuplicateFiles" xml:space="preserve"><value>重复文件</value></data>
+  <data name="Preview.Play" xml:space="preserve"><value>播放</value></data>
+  <data name="Preview.OpenInExplorer" xml:space="preserve"><value>在资源管理器中打开</value></data>
+
+  <!-- ===== 通用 ===== -->
+  <data name="Common.OK" xml:space="preserve"><value>确定</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Common.Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Common.Yes" xml:space="preserve"><value>是</value></data>
+  <data name="Common.No" xml:space="preserve"><value>否</value></data>
+  <data name="Common.About" xml:space="preserve"><value>关于</value></data>
+  <data name="Common.Help" xml:space="preserve"><value>帮助</value></data>
+</root>

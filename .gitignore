@@ -1,0 +1,19 @@
+## 忽略 Visual Studio 生成的文件
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+.vscode/
+
+## 忽略 NuGet 包
+packages/
+*.nupkg
+
+## 忽略测试结果
+TestResults/
+*.trx
+*.coverage
+
+## 忽略应用数据
+*.log
